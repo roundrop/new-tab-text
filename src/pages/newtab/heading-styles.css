@@ -1,0 +1,53 @@
+/* CodeMirrorの見出しスタイル上書き用 */
+.cm-header::before, .cm-header::after,
+.cm-header-1::before, .cm-header-1::after,
+.cm-header-2::before, .cm-header-2::after,
+.cm-header-3::before, .cm-header-3::after,
+.cm-header-4::before, .cm-header-4::after,
+.cm-header-5::before, .cm-header-5::after,
+.cm-header-6::before, .cm-header-6::after {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+/* マークダウン見出し (#や##など) 専用スタイル */
+.cm-line .cm-header {
+  color: inherit;
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* すべてのタグに適用されるスタイル */
+.cm-header {
+  font-weight: bold;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* 見出しレベル別のサイズ設定 */
+.cm-header-1 {
+  font-size: 1.8em !important;
+}
+
+.cm-header-2 {
+  font-size: 1.5em !important;
+}
+
+.cm-header-3 {
+  font-size: 1.3em !important;
+}
+
+.cm-header-4 {
+  font-size: 1.2em !important;
+}
+
+.cm-header-5 {
+  font-size: 1.1em !important;
+}
+
+.cm-header-6 {
+  font-size: 1em !important;
+}

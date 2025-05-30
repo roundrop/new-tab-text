@@ -1,0 +1,100 @@
+/* 最大優先度のリセットスタイル */
+.cm-content .cm-line .cm-header,
+.cm-content .cm-line .cm-header-1,
+.cm-content .cm-line .cm-header-2,
+.cm-content .cm-line .cm-header-3,
+.cm-content .cm-line .cm-header-4,
+.cm-content .cm-line .cm-header-5,
+.cm-content .cm-line .cm-header-6 {
+  color: inherit !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  -webkit-text-decoration: none !important;
+}
+
+/* 疑似要素もリセット */
+.cm-content .cm-line .cm-header::before,
+.cm-content .cm-line .cm-header::after,
+.cm-content .cm-line .cm-header-1::before,
+.cm-content .cm-line .cm-header-1::after,
+.cm-content .cm-line .cm-header-2::before,
+.cm-content .cm-line .cm-header-2::after,
+.cm-content .cm-line .cm-header-3::before,
+.cm-content .cm-line .cm-header-3::after,
+.cm-content .cm-line .cm-header-4::before,
+.cm-content .cm-line .cm-header-4::after,
+.cm-content .cm-line .cm-header-5::before,
+.cm-content .cm-line .cm-header-5::after,
+.cm-content .cm-line .cm-header-6::before,
+.cm-content .cm-line .cm-header-6::after {
+  content: none !important;
+  display: none !important;
+  border: none !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  -webkit-text-decoration: none !important;
+}
+
+/* 見出しスタイルのリセットと再定義 */
+.cm-content .cm-header {
+  all: unset;
+  display: inline-block;
+  font-weight: bold !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  color: inherit !important;
+}
+
+/* 見出しレベル別のサイズ設定（!importantで強制） */
+.cm-content .cm-header-1 {
+  font-size: 1.8em !important;
+  font-weight: bold !important;
+}
+
+.cm-content .cm-header-2 {
+  font-size: 1.5em !important;
+  font-weight: bold !important;
+}
+
+.cm-content .cm-header-3 {
+  font-size: 1.3em !important;
+  font-weight: bold !important;
+}
+
+.cm-content .cm-header-4 {
+  font-size: 1.2em !important;
+  font-weight: bold !important;
+}
+
+.cm-content .cm-header-5 {
+  font-size: 1.1em !important;
+  font-weight: bold !important;
+}
+
+.cm-content .cm-header-6 {
+  font-size: 1em !important;
+  font-weight: bold !important;
+}
+
+/* スタイルの継承を防止 */
+.cm-content .cm-line * {
+  text-decoration: inherit;
+}
+
+/* 特別なスタイルリセット */
+.cm-content .cm-header a,
+.cm-content .cm-header-1 a,
+.cm-content .cm-header-2 a,
+.cm-content .cm-header-3 a,
+.cm-content .cm-header-4 a,
+.cm-content .cm-header-5 a,
+.cm-content .cm-header-6 a {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}

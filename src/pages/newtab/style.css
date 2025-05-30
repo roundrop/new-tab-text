@@ -1,0 +1,204 @@
+:root {
+  --primary-bg: #ffffff;
+  --primary-text: #212529;
+  --editor-bg: #f8f9fa;
+  --editor-text: #212529;
+  --gutter-bg: #f0f0f0;
+  --gutter-text: #6c757d;
+  --gutter-active-bg: #e9ecef;
+  --selection-bg: rgba(13, 110, 253, 0.2);
+  /* リンク関連のカスタム変数 */
+  --md-link: #0d6efd;
+  --md-url: #6c757d;
+  --md-quote: #198754;
+  --md-list: #212529;
+  --md-code: #212529;
+  --md-code-bg: transparent;
+}
+
+[data-theme="dark"] {
+  --primary-bg: #1a1d23;
+  --primary-text: #e9ecef;
+  --editor-bg: #252830;
+  --editor-text: #e9ecef;
+  --gutter-bg: #2c2f36;
+  --gutter-text: #8e9297;
+  --gutter-active-bg: #3a3f47;
+  --selection-bg: rgba(59, 130, 246, 0.3);
+  /* リンク関連のカスタム変数 */
+  --md-link: #60a5fa;
+  --md-url: #9ca3af;
+  --md-quote: #34d399;
+  --md-list: #e9ecef;
+  --md-code: #e9ecef;
+  --md-code-bg: transparent;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: Consolas, 'Cascadia Code', 'Cascadia Mono', 'SF Mono', Monaco, Menlo, 'Liberation Mono', 'DejaVu Sans Mono', 'Ubuntu Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow: hidden; /* スクロールバーを非表示 */
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+#editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--editor-bg);
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] #editor-container {
+  /* ダークモード時のスタイル調整 */
+}
+
+#editor {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--editor-bg);
+  border: 2px solid var(--gutter-bg);
+  cursor: pointer;
+  color: var(--primary-text);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle:hover {
+  background-color: var(--gutter-bg);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .theme-toggle {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cm-editor {
+  height: 100%;
+  min-height: 100%;
+  position: relative;
+}
+
+.cm-content {
+  font-family: Consolas, 'Cascadia Code', 'Cascadia Mono', 'SF Mono', Monaco, Menlo, 'Liberation Mono', 'DejaVu Sans Mono', 'Ubuntu Mono', 'Courier New', monospace !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  position: relative;
+  z-index: 1;
+  /* 等幅フォント用の最適化 */
+  letter-spacing: 0.02em;
+  font-feature-settings: "liga" 0; /* 合字を無効化 */
+  font-variant-ligatures: none;
+  text-rendering: optimizeSpeed;
+  /* 日本語入力時のレンダリング最適化 */
+  transform: translateZ(0);
+  will-change: contents;
+}
+
+/* 等幅フォント用の日本語入力最適化 */
+.cm-scroller {
+  position: relative;
+  z-index: 0;
+  /* 等幅フォントでのスクロール最適化 */
+  transform: translateZ(0);
+}
+
+.cm-line {
+  position: relative;
+  /* 等幅フォントでの行描画最適化 */
+  transform: translateZ(0);
+}
+
+/* 等幅フォント用のカーソル最適化 */
+.cm-cursor {
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  /* 等幅フォントでのカーソル幅調整 */
+  border-left-width: 2px !important;
+}
+
+/* 変換候補ウィンドウ位置調整用要素 */
+.ime-position-helper {
+  position: absolute !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* 等幅フォント用の日本語入力候補ウィンドウ対策 */
+@supports (-webkit-app-region: blur) {
+  .cm-cursor {
+    transform: translateZ(0) !important;
+  }
+  
+  .cm-content {
+    /* 等幅フォントでのIME入力安定化 */
+    isolation: isolate !important;
+  }
+}
+
+/* 等幅フォントでの日本語文字表示最適化 */
+.cm-content * {
+  font-variant-ligatures: none !important;
+  font-feature-settings: "liga" 0 !important;
+}
+
+/* 見出しの下線を削除 */
+.cm-header, .cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* パフォーマンス改善のためにアニメーションを軽量化 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* 等幅フォント用のフォントレンダリング最適化 */
+@supports (font-feature-settings: "liga" 0) {
+  .cm-content, .cm-content * {
+    font-feature-settings: "liga" 0, "calt" 0, "clig" 0 !important;
+  }
+}

@@ -1,0 +1,105 @@
+/* さらに強力な見出しスタイルのリセット */
+.cm-content .cm-line span.cm-header,
+.cm-content .cm-line span.cm-header-1,
+.cm-content .cm-line span.cm-header-2,
+.cm-content .cm-line span.cm-header-3,
+.cm-content .cm-line span.cm-header-4,
+.cm-content .cm-line span.cm-header-5,
+.cm-content .cm-line span.cm-header-6 {
+  color: inherit !important;
+  font-weight: bold !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  background: none !important;
+  -webkit-text-decoration: none !important;
+  text-decoration-line: none !important;
+  text-decoration-style: none !important;
+  text-decoration-color: transparent !important;
+  text-underline-offset: 0 !important;
+  text-decoration-thickness: 0 !important;
+  text-underline-position: auto !important;
+}
+
+/* さらに強力な疑似要素のリセット */
+.cm-content .cm-line span.cm-header::before,
+.cm-content .cm-line span.cm-header::after,
+.cm-content .cm-line span.cm-header-1::before,
+.cm-content .cm-line span.cm-header-1::after,
+.cm-content .cm-line span.cm-header-2::before,
+.cm-content .cm-line span.cm-header-2::after,
+.cm-content .cm-line span.cm-header-3::before,
+.cm-content .cm-line span.cm-header-3::after,
+.cm-content .cm-line span.cm-header-4::before,
+.cm-content .cm-line span.cm-header-4::after,
+.cm-content .cm-line span.cm-header-5::before,
+.cm-content .cm-line span.cm-header-5::after,
+.cm-content .cm-line span.cm-header-6::before,
+.cm-content .cm-line span.cm-header-6::after {
+  content: none !important;
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  border: none !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+/* インラインスタイルシートを上書き */
+[style*="text-decoration"] {
+  text-decoration: none !important;
+}
+
+.cm-content span.cm-header[style],
+.cm-content span.cm-header-1[style],
+.cm-content span.cm-header-2[style],
+.cm-content span.cm-header-3[style],
+.cm-content span.cm-header-4[style],
+.cm-content span.cm-header-5[style],
+.cm-content span.cm-header-6[style] {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* すべてのサイズ設定 */
+.cm-content span.cm-header-1 {
+  font-size: 1.8em !important;
+}
+
+.cm-content span.cm-header-2 {
+  font-size: 1.5em !important;
+}
+
+.cm-content span.cm-header-3 {
+  font-size: 1.3em !important; 
+}
+
+.cm-content span.cm-header-4 {
+  font-size: 1.2em !important;
+}
+
+.cm-content span.cm-header-5 {
+  font-size: 1.1em !important;
+}
+
+.cm-content span.cm-header-6 {
+  font-size: 1em !important;
+}
+
+/* 最強の優先度を持つセレクタ - 親要素から指定 */
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header,
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header-1,
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header-2,
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header-3,
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header-4,
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header-5,
+html body #app #editor-container #editor .cm-editor .cm-scroller .cm-content .cm-line span.cm-header-6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  -webkit-text-decoration: none !important;
+}
