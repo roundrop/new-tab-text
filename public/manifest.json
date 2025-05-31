@@ -4,8 +4,7 @@
   "version": "0.1.0",
   "description": "A Chrome extension that transforms new tabs into a text editor",
   "permissions": [
-    "storage",
-    "tabs"
+    "storage"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
