@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "New Tab Text",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A Chrome extension that transforms new tabs into a text editor",
   "permissions": [
     "storage"
