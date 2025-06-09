@@ -71,7 +71,7 @@ class NewTabTextApp {
       (window as any).newTabTextDebug = {
         getInfo: () => this.editorUseCase.getDebugInfo(),
         forceSave: () => this.editorUseCase.debugSave(),
-        version: '1.0.0'
+        version: '1.1.0'
       };
 
       console.log('New Tab Text application initialized');
