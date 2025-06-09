@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => {
         '@': resolve(__dirname, 'src'),
       },
     },
+    define: {
+      // 開発環境判定用のグローバル変数
+      __DEV__: isDev,
+    },
     build: {
       rollupOptions: {
         input: {

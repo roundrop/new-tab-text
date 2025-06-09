@@ -48,6 +48,11 @@ class NewTabTextApp {
    */
   private async initialize(): Promise<void> {
     try {
+      // 開発環境でのみインジケーターを表示
+      if (__DEV__) {
+        this.createDevIndicator();
+      }
+
       // Get DOM elements
       const editorElement = document.getElementById('editor');
       if (!editorElement) {
@@ -73,6 +78,27 @@ class NewTabTextApp {
     } catch (error) {
       console.error('New Tab Text initialization failed:', error);
     }
+  }
+
+  /**
+   * 開発版インジケーターを作成する
+   */
+  private createDevIndicator(): void {
+    const indicator = document.createElement('div');
+    indicator.textContent = 'DEV';
+    indicator.style.cssText = `
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: #ff6b6b;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 1000;
+      font-family: monospace;
+    `;
+    document.body.appendChild(indicator);
   }
 }
 
