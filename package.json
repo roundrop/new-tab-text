@@ -1,11 +1,12 @@
 {
   "name": "new-tab-text",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Chrome extension that transforms new tabs into a text editor",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:extension": "NODE_ENV=development node scripts/build-manifest.js && vite build --mode development --watch",
+    "build": "tsc && node scripts/build-manifest.js && vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext ts,tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",

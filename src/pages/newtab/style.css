@@ -12,8 +12,9 @@
   --md-url: #6c757d;
   --md-quote: #198754;
   --md-list: #212529;
-  --md-code: #212529;
-  --md-code-bg: transparent;
+  --md-code: #e36209;
+  --md-code-bg: #f1f3f4;
+  --md-code-border: #e1e4e8;
 }
 
 [data-theme="dark"] {
@@ -30,8 +31,9 @@
   --md-url: #9ca3af;
   --md-quote: #34d399;
   --md-list: #e9ecef;
-  --md-code: #e9ecef;
-  --md-code-bg: transparent;
+  --md-code: #ffab70;
+  --md-code-bg: #0f172a;
+  --md-code-border: #30363d;
 }
 
 * {

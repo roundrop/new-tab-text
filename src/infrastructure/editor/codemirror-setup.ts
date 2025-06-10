@@ -4,7 +4,9 @@ import {
   keymap, 
   lineNumbers, 
   highlightActiveLine,
-  highlightSpecialChars
+  highlightSpecialChars,
+  Decoration,
+  DecorationSet
 } from '@codemirror/view';
 import { 
   defaultKeymap, 
@@ -12,16 +14,64 @@ import {
   historyKeymap,
   indentWithTab
 } from '@codemirror/commands';
-import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
+import { syntaxHighlighting, HighlightStyle, syntaxTree } from '@codemirror/language';
 import { markdown } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import { tags } from '@lezer/highlight';
+import { StateField } from '@codemirror/state';
+import { RangeSetBuilder } from '@codemirror/state';
 
 
 // Chromium IME bug fix
 // Apply minimal settings only to resolve Japanese input issues
 // @ts-ignore
 EditorView.EDIT_CONTEXT = false; // Recommended fix from article
+
+// Code block decorations
+const codeBlockDecoration = Decoration.line({
+  class: 'cm-code-block-line'
+});
+
+// State field for code block decorations
+const codeBlockField = StateField.define<DecorationSet>({
+  create(state) {
+    // 初期状態でもDecorationを作成
+    return buildCodeBlockDecorations(state);
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    
+    if (tr.docChanged) {
+      decorations = buildCodeBlockDecorations(tr.state);
+    }
+    
+    return decorations;
+  },
+  provide: f => EditorView.decorations.from(f)
+});
+
+// コードブロックのDecorationを構築するヘルパー関数
+function buildCodeBlockDecorations(state: EditorState): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const tree = syntaxTree(state);
+  
+  tree.iterate({
+    enter: (node) => {
+      if (node.name === 'FencedCode') {
+        const from = state.doc.lineAt(node.from);
+        const to = state.doc.lineAt(node.to);
+        
+        // Add decoration to each line of the code block
+        for (let lineNum = from.number; lineNum <= to.number; lineNum++) {
+          const line = state.doc.line(lineNum);
+          builder.add(line.from, line.from, codeBlockDecoration);
+        }
+      }
+    }
+  });
+  
+  return builder.finish();
+}
 
 /**
  * Function to set up CodeMirror editor
@@ -72,7 +122,7 @@ const lightMarkdownHighlightStyle = HighlightStyle.define([
   { tag: tags.quote, color: "#198754", fontStyle: "italic" },
   { tag: tags.list, color: "#212529" },
   { tag: tags.content, color: "#212529" },
-  { tag: tags.monospace, color: "#212529", backgroundColor: "transparent" },
+  { tag: tags.monospace, color: "var(--md-code)", backgroundColor: "var(--md-code-bg)", padding: "2px 4px", borderRadius: "4px", border: "1px solid var(--md-code-border)" },
   { tag: tags.meta, color: "#495057" },
 ], { themeType: 'light' });
 
@@ -96,7 +146,7 @@ const darkMarkdownHighlightStyle = HighlightStyle.define([
   { tag: tags.quote, color: "#34d399", fontStyle: "italic" },
   { tag: tags.list, color: "#e9ecef" },
   { tag: tags.content, color: "#e9ecef" },
-  { tag: tags.monospace, color: "#e9ecef", backgroundColor: "transparent" },
+  { tag: tags.monospace, color: "var(--md-code)", backgroundColor: "var(--md-code-bg)", padding: "2px 4px", borderRadius: "4px", border: "1px solid var(--md-code-border)" },
   // Improved visibility of Markdown notation characters (#, -, *, > etc.) - changed to very bright color
   { tag: tags.meta, color: "#f3f4f6" },
   { tag: tags.processingInstruction, color: "#f3f4f6" },
@@ -163,6 +213,8 @@ function createExtensions(isDarkMode: boolean): Extension[] {
     // Syntax highlighting style (use custom styles only)
     syntaxHighlighting(isDarkMode ? darkMarkdownHighlightStyle : lightMarkdownHighlightStyle),
     EditorView.lineWrapping,
+    // Code block decoration field
+    codeBlockField,
     // Settings for Japanese IME support
     EditorState.allowMultipleSelections.of(false),
     // Character width adjustment for monospace fonts
@@ -276,19 +328,81 @@ function createDarkTheme(): Extension {
       borderBottom: 'none !important',
       boxShadow: 'none !important' 
     },
-    // Set dark mode code block color same as normal text
+    // Code block line decorations for dark mode
+    '.cm-code-block-line': {
+      backgroundColor: 'var(--md-code-bg) !important',
+      paddingLeft: '0px !important',
+      paddingRight: '20px !important',
+      paddingTop: '2px !important',
+      paddingBottom: '2px !important',
+      margin: '0 !important'
+    },
+    // マルチラインコードブロック内では、インラインコードスタイルを無効化
+    '.cm-code-block-line .cm-monospace': {
+      color: 'var(--md-code) !important',
+      backgroundColor: 'transparent !important',
+      border: 'none !important',
+      borderRadius: '0 !important',
+      padding: '0 !important',
+      boxShadow: 'none !important'
+    },
+    '.cm-code-block-line .tok-monospace': {
+      color: 'var(--md-code) !important',
+      backgroundColor: 'transparent !important',
+      border: 'none !important',
+      borderRadius: '0 !important',
+      padding: '0 !important',
+      boxShadow: 'none !important'
+    },
+    // より具体的なセレクタでマルチラインコードブロック内の全ての要素をリセット
+    '.cm-code-block-line *': {
+      border: 'none !important',
+      backgroundColor: 'transparent !important',
+      padding: '0 !important',
+      margin: '0 !important',
+      borderRadius: '0 !important',
+      boxShadow: 'none !important'
+    },
+    '.cm-code-block-line .cm-content *': {
+      border: 'none !important',
+      backgroundColor: 'transparent !important',
+      padding: '0 !important',
+      borderRadius: '0 !important'
+    },
+    // Code block styles for dark mode
     '.cm-monospace': {
-      color: 'var(--editor-text, #e9ecef) !important',
-      backgroundColor: 'transparent !important'
+      color: 'var(--md-code) !important',
+      backgroundColor: 'var(--md-code-bg) !important',
+      border: '1px solid var(--md-code-border) !important',
+      borderRadius: '4px !important',
+      padding: '2px 4px !important'
     },
     // For inline code (multiple patterns)
     '.tok-monospace': {
-      color: 'var(--editor-text, #e9ecef) !important',
-      backgroundColor: 'transparent !important'
+      color: 'var(--md-code) !important',
+      backgroundColor: 'var(--md-code-bg) !important',
+      border: '1px solid var(--md-code-border) !important',
+      borderRadius: '4px !important',
+      padding: '2px 4px !important'
     },
     '.cm-content .cm-monospace': {
-      color: 'var(--editor-text, #e9ecef) !important',
-      backgroundColor: 'transparent !important'
+      color: 'var(--md-code) !important',
+      backgroundColor: 'var(--md-code-bg) !important',
+      border: '1px solid var(--md-code-border) !important',
+      borderRadius: '4px !important',
+      padding: '2px 4px !important'
+    },
+    // Multi-line code block styles for dark mode
+    '.cm-fenced-code': {
+      backgroundColor: 'var(--md-code-bg) !important',
+      borderLeft: '4px solid var(--md-code) !important',
+      borderTop: '1px solid var(--md-code-border) !important',
+      borderRight: '1px solid var(--md-code-border) !important',
+      borderBottom: '1px solid var(--md-code-border) !important',
+      borderRadius: '6px !important',
+      padding: '16px 20px !important',
+      margin: '12px 0 !important',
+      display: 'block !important'
     },
     // Classes possibly used by CodeMirror's HighlightStyle
     '.ͼ1': { // CodeMirror internal class (for monospace)
@@ -387,19 +501,81 @@ function createLightTheme(): Extension {
       borderBottom: 'none !important',
       boxShadow: 'none !important' 
     },
-    // Set light mode code block color same as normal text
+    // Code block line decorations for light mode
+    '.cm-code-block-line': {
+      backgroundColor: 'var(--md-code-bg) !important',
+      paddingLeft: '0px !important',
+      paddingRight: '20px !important',
+      paddingTop: '2px !important',
+      paddingBottom: '2px !important',
+      margin: '0 !important'
+    },
+    // マルチラインコードブロック内では、インラインコードスタイルを無効化
+    '.cm-code-block-line .cm-monospace': {
+      color: 'var(--md-code) !important',
+      backgroundColor: 'transparent !important',
+      border: 'none !important',
+      borderRadius: '0 !important',
+      padding: '0 !important',
+      boxShadow: 'none !important'
+    },
+    '.cm-code-block-line .tok-monospace': {
+      color: 'var(--md-code) !important',
+      backgroundColor: 'transparent !important',
+      border: 'none !important',
+      borderRadius: '0 !important',
+      padding: '0 !important',
+      boxShadow: 'none !important'
+    },
+    // より具体的なセレクタでマルチラインコードブロック内の全ての要素をリセット
+    '.cm-code-block-line *': {
+      border: 'none !important',
+      backgroundColor: 'transparent !important',
+      padding: '0 !important',
+      margin: '0 !important',
+      borderRadius: '0 !important',
+      boxShadow: 'none !important'
+    },
+    '.cm-code-block-line .cm-content *': {
+      border: 'none !important',
+      backgroundColor: 'transparent !important',
+      padding: '0 !important',
+      borderRadius: '0 !important'
+    },
+    // Code block styles for light mode
     '.cm-monospace': {
-      color: 'var(--editor-text, #212529) !important',
-      backgroundColor: 'transparent !important'
+      color: 'var(--md-code) !important',
+      backgroundColor: 'var(--md-code-bg) !important',
+      border: '1px solid var(--md-code-border) !important',
+      borderRadius: '4px !important',
+      padding: '2px 4px !important'
     },
     // For inline code (multiple patterns)
     '.tok-monospace': {
-      color: 'var(--editor-text, #212529) !important',
-      backgroundColor: 'transparent !important'
+      color: 'var(--md-code) !important',
+      backgroundColor: 'var(--md-code-bg) !important',
+      border: '1px solid var(--md-code-border) !important',
+      borderRadius: '4px !important',
+      padding: '2px 4px !important'
     },
     '.cm-content .cm-monospace': {
-      color: 'var(--editor-text, #212529) !important',
-      backgroundColor: 'transparent !important'
+      color: 'var(--md-code) !important',
+      backgroundColor: 'var(--md-code-bg) !important',
+      border: '1px solid var(--md-code-border) !important',
+      borderRadius: '4px !important',
+      padding: '2px 4px !important'
+    },
+    // Multi-line code block styles for light mode
+    '.cm-fenced-code': {
+      backgroundColor: 'var(--md-code-bg) !important',
+      borderLeft: '4px solid var(--md-code) !important',
+      borderTop: '1px solid var(--md-code-border) !important',
+      borderRight: '1px solid var(--md-code-border) !important',
+      borderBottom: '1px solid var(--md-code-border) !important',
+      borderRadius: '6px !important',
+      padding: '16px 20px !important',
+      margin: '12px 0 !important',
+      display: 'block !important'
     },
   });
 }
