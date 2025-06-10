@@ -2,8 +2,8 @@
 
 New Tab Text is a Chrome extension that transforms new tab into a simple text editor.
 
-<img src="https://github.com/user-attachments/assets/7ef81ec4-3d91-4278-b201-2f8aba7dd2d8" width="45%" />
-<img src="https://github.com/user-attachments/assets/ab54ce84-f5d5-4c95-a9a6-c2d410e47a40" width="45%" />
+<img src="https://github.com/roundrop/new-tab-text/blob/main/public/images/ss_l.png?raw=true" width="45%" />
+<img src="https://github.com/roundrop/new-tab-text/blob/main/public/images/ss_d.png?raw=true" width="45%" />
 
 
 Chrome Web Store: https://chromewebstore.google.com/detail/new-tab-text/hcpmdhnmdiampimbhfmkjfalmfofkmhe
