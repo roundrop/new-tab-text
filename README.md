@@ -17,6 +17,29 @@ Chrome Web Store: https://chromewebstore.google.com/detail/new-tab-text/hcpmdhnm
 - Chrome sync functionality (within Chrome account)
 - Multibyte character input optimization
 
+## Development
+
+### Setup
+```
+npm install
+```
+
+### Build for development
+```
+npm run dev:extension
+```
+
+### Bulid for production
+```
+npm run build
+```
+
+#### Packaging
+```
+cd dist
+zip -r ../new-tab-text_x.y.z.zip *
+```
+
 ## License
 
 MIT
