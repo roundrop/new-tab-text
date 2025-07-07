@@ -13,6 +13,7 @@ import { LocalThemeRepository } from '../../adapters/theme/local-theme-repositor
 
 // Infrastructure
 import { UIManager } from '../../infrastructure/ui/ui-manager';
+import { logger } from '../../utils/logger';
 
 /**
  * New Tab Text application entry point
@@ -20,19 +21,22 @@ import { UIManager } from '../../infrastructure/ui/ui-manager';
 class NewTabTextApp {
   private editorUseCase: EditorUseCase;
   private uiManager: UIManager;
+  private storageRepository: ChromeStorageRepository;
+  private editorRepository: CodeMirrorRepository;
+  private themeRepository: LocalThemeRepository;
 
   constructor() {
     // Create repository instances
-    const storageRepository = new ChromeStorageRepository();
-    const editorRepository = new CodeMirrorRepository();
-    const themeRepository = new LocalThemeRepository();
+    this.storageRepository = new ChromeStorageRepository();
+    this.editorRepository = new CodeMirrorRepository();
+    this.themeRepository = new LocalThemeRepository();
     this.uiManager = new UIManager();
 
     // Create use case instance
     this.editorUseCase = new EditorUseCase(
-      storageRepository,
-      editorRepository,
-      themeRepository
+      this.storageRepository,
+      this.editorRepository,
+      this.themeRepository
     );
 
     // Start initialization when DOM is loaded
@@ -69,14 +73,13 @@ class NewTabTextApp {
 
       // Expose to global scope for debugging
       (window as any).newTabTextDebug = {
-        getInfo: () => this.editorUseCase.getDebugInfo(),
-        forceSave: () => this.editorUseCase.debugSave(),
         version: '1.1.0'
       };
 
-      console.log('New Tab Text application initialized');
+      // Log initial debug info
+      logger.info('App', 'New Tab Text application initialized');
     } catch (error) {
-      console.error('New Tab Text initialization failed:', error);
+      logger.error('App', 'New Tab Text initialization failed:', error);
     }
   }
 
