@@ -7,16 +7,6 @@ import {
 import { logger } from "../../utils/logger";
 
 /**
- * Save operation result interface
- */
-interface SaveOperationResult {
-  success: boolean;
-  error?: Error;
-  timestamp: number;
-  contentLength: number;
-}
-
-/**
  * Use case for editor initialization and state management
  * Silent auto-save that doesn't disturb user focus
  */
@@ -30,7 +20,6 @@ export class EditorUseCase {
   // Enhanced save operation management
   private saveInProgress: boolean = false;
   private pendingSaveContent: string | null = null;
-  private lastSaveResult: SaveOperationResult | null = null;
   private saveAttemptCount: number = 0;
   private readonly MAX_SAVE_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 2000;
@@ -278,24 +267,11 @@ Try clicking the button in the top-right corner!
       this.hasUnsavedChanges = false;
       this.saveAttemptCount = 0; // Reset retry counter
       
-      this.lastSaveResult = {
-        success: true,
-        timestamp: Date.now(),
-        contentLength: content.length
-      };
-      
       const saveTime = Date.now() - startTime;
       logger.debug('EditorUseCase', `Save successful (${saveTime}ms)`);
       
     } catch (error) {
       logger.error('EditorUseCase', `Save failed:`, error);
-      
-      this.lastSaveResult = {
-        success: false,
-        error: error as Error,
-        timestamp: Date.now(),
-        contentLength: content.length
-      };
       
       // Retry logic
       this.saveAttemptCount++;
