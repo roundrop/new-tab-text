@@ -73,7 +73,7 @@ class NewTabTextApp {
 
       // Expose to global scope for debugging
       (window as any).newTabTextDebug = {
-        version: '1.1.0'
+        version: '1.2.0'
       };
 
       // Log initial debug info
