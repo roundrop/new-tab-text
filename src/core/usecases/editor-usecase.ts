@@ -288,13 +288,16 @@ Try clicking the button in the top-right corner!
         this.saveAttemptCount = 0; // Reset for next attempt
       }
     } finally {
-      this.saveInProgress = false;
-      
       // Process any pending content that accumulated during save
       if (this.pendingSaveContent && this.pendingSaveContent !== content) {
         logger.debug('EditorUseCase', 'Processing queued content');
         setTimeout(() => this.processSave(), 100);
       }
+    }
+    
+    // Reset saveInProgress only after retries are exhausted or save is successful
+    if (!isRetry || this.saveAttemptCount > this.MAX_SAVE_RETRIES) {
+      this.saveInProgress = false;
     }
   }
 
