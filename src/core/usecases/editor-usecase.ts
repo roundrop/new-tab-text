@@ -4,6 +4,7 @@ import {
   EditorRepository,
   ThemeRepository,
 } from "../ports/repositories";
+import { logger } from "../../utils/logger";
 
 /**
  * Use case for editor initialization and state management
@@ -15,6 +16,13 @@ export class EditorUseCase {
   private lastContent: string = '';
   private hasUnsavedChanges: boolean = false;
   private isPageVisible: boolean = true;
+  
+  // Enhanced save operation management
+  private saveInProgress: boolean = false;
+  private pendingSaveContent: string | null = null;
+  private saveAttemptCount: number = 0;
+  private readonly MAX_SAVE_RETRIES = 3;
+  private readonly RETRY_DELAY_MS = 2000;
 
   constructor(
     private storageRepository: StorageRepository,
@@ -203,10 +211,13 @@ Try clicking the button in the top-right corner!
   }
 
   /**
-   * Debounced save process
+   * Debounced save process with queue management
    * @param content Content to save
    */
   private debouncedSave(content: string): void {
+    // Add content to pending queue
+    this.pendingSaveContent = content;
+    
     // Cancel previous timer
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
@@ -214,17 +225,80 @@ Try clicking the button in the top-right corner!
 
     // Set new timer
     this.saveTimeout = setTimeout(async () => {
-      try {
-        await this.saveContent(content);
-        this.lastContent = content;
-        this.hasUnsavedChanges = false;
-        // Silent save - don't notify user
-      } catch (error) {
-        // Only log errors to console (don't show to user)
-        console.error('Save failed:', error);
-      }
-      this.saveTimeout = null;
+      await this.processSave();
     }, this.SAVE_DELAY_MS);
+  }
+
+  /**
+   * Process save operation with queue and retry logic
+   */
+  private async processSave(): Promise<void> {
+    // If save is already in progress, just update the pending content
+    if (this.saveInProgress) {
+      logger.info('EditorUseCase', 'Save in progress, content queued');
+      return;
+    }
+
+    if (!this.pendingSaveContent) {
+      return;
+    }
+
+    const contentToSave = this.pendingSaveContent;
+    this.pendingSaveContent = null;
+    this.saveTimeout = null;
+    
+    await this.executeSaveWithRetry(contentToSave);
+  }
+
+  /**
+   * Execute save with retry logic
+   */
+  private async executeSaveWithRetry(content: string, isRetry: boolean = false): Promise<void> {
+    this.saveInProgress = true;
+    const startTime = Date.now();
+    
+    try {
+      logger.info('EditorUseCase', `${isRetry ? 'Retrying' : 'Starting'} save operation (${content.length} chars)`);
+      
+      await this.saveContent(content);
+      
+      // Save successful
+      this.lastContent = content;
+      this.hasUnsavedChanges = false;
+      this.saveAttemptCount = 0; // Reset retry counter
+      
+      const saveTime = Date.now() - startTime;
+      logger.debug('EditorUseCase', `Save successful (${saveTime}ms)`);
+      
+    } catch (error) {
+      logger.error('EditorUseCase', `Save failed:`, error);
+      
+      // Retry logic
+      this.saveAttemptCount++;
+      if (this.saveAttemptCount <= this.MAX_SAVE_RETRIES) {
+        logger.warn('EditorUseCase', `Scheduling retry ${this.saveAttemptCount}/${this.MAX_SAVE_RETRIES} in ${this.RETRY_DELAY_MS}ms`);
+        
+        setTimeout(() => {
+          this.executeSaveWithRetry(content, true);
+        }, this.RETRY_DELAY_MS);
+        
+        return; // Don't clear saveInProgress flag yet
+      } else {
+        logger.error('EditorUseCase', `All save retries exhausted`);
+        this.saveAttemptCount = 0; // Reset for next attempt
+      }
+    } finally {
+      // Process any pending content that accumulated during save
+      if (this.pendingSaveContent && this.pendingSaveContent !== content) {
+        logger.debug('EditorUseCase', 'Processing queued content');
+        setTimeout(() => this.processSave(), 100);
+      }
+    }
+    
+    // Reset saveInProgress only after retries are exhausted or save is successful
+    if (!isRetry || this.saveAttemptCount > this.MAX_SAVE_RETRIES) {
+      this.saveInProgress = false;
+    }
   }
 
   /**
@@ -232,21 +306,44 @@ Try clicking the button in the top-right corner!
    * Used when tab becomes inactive or when leaving page
    */
   private async forceSave(): Promise<void> {
+    logger.debug('EditorUseCase', 'Force save triggered');
+    
     // Cancel pending debounced timer
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
       this.saveTimeout = null;
     }
 
-    try {
-      const currentContent = this.editorRepository.getContent();
-      if (currentContent !== this.lastContent) {
-        await this.saveContent(currentContent);
-        this.lastContent = currentContent;
-        this.hasUnsavedChanges = false;
+    const currentContent = this.editorRepository.getContent();
+    
+    // If content hasn't changed, no need to save
+    if (currentContent === this.lastContent) {
+      logger.debug('EditorUseCase', 'No changes detected, skipping force save');
+      return;
+    }
+
+    // If save is in progress, wait for it to complete then save current content
+    if (this.saveInProgress) {
+      logger.info('EditorUseCase', 'Waiting for current save to complete');
+      
+      // Wait for current save to complete (with timeout)
+      const maxWaitTime = 5000; // 5 seconds
+      const startWait = Date.now();
+      
+      while (this.saveInProgress && (Date.now() - startWait) < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
+      
+      if (this.saveInProgress) {
+        logger.warn('EditorUseCase', 'Timeout waiting for save to complete, proceeding anyway');
+      }
+    }
+
+    // Execute immediate save
+    try {
+      await this.executeSaveWithRetry(currentContent);
     } catch (error) {
-      console.error('Force save failed:', error);
+      logger.error('EditorUseCase', 'Force save failed:', error);
     }
   }
 
@@ -271,7 +368,7 @@ Try clicking the button in the top-right corner!
       }
     } catch (error) {
       // Log detailed save error information
-      console.error('Error occurred in saveContent:', {
+      logger.error('EditorUseCase', 'Error occurred in saveContent:', {
         error: error,
         contentLength: content.length,
         timestamp: new Date().toISOString()
@@ -286,28 +383,5 @@ Try clicking the button in the top-right corner!
   toggleTheme(): void {
     const currentTheme = this.themeRepository.isDarkMode();
     this.themeRepository.setDarkMode(!currentTheme);
-  }
-
-  /**
-   * Get debug information (function available in console)
-   * @returns Current state information
-   */
-  getDebugInfo(): any {
-    return {
-      lastContent: this.lastContent,
-      hasUnsavedChanges: this.hasUnsavedChanges,
-      isPageVisible: this.isPageVisible,
-      hasPendingSave: this.saveTimeout !== null,
-      currentContent: this.editorRepository.getContent(),
-      contentLength: this.editorRepository.getContent().length,
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Manually execute force save (for debugging)
-   */
-  async debugSave(): Promise<void> {
-    await this.forceSave();
   }
 }
