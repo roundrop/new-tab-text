@@ -1,10 +1,11 @@
+import { logger } from "../../utils/logger";
 import { Memo, MemoFactory } from "../entities/memo";
 import {
   StorageRepository,
   EditorRepository,
   ThemeRepository,
 } from "../ports/repositories";
-import { logger } from "../../utils/logger";
+
 
 /**
  * Use case for editor initialization and state management
@@ -23,6 +24,10 @@ export class EditorUseCase {
   private saveAttemptCount: number = 0;
   private readonly MAX_SAVE_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 2000;
+  
+  // Save queue management
+  private saveQueue: string[] = [];
+  private queueProcessing: boolean = false;
 
   constructor(
     private storageRepository: StorageRepository,
@@ -186,11 +191,21 @@ Try clicking the button in the top-right corner!
       }
     });
 
-    // Handle before page unload
+    // Handle page hide (more reliable than beforeunload for saving)
+    window.addEventListener('pagehide', () => {
+      if (this.hasUnsavedChanges) {
+        // Use synchronous save for page hide to ensure data is saved
+        this.synchronousSave();
+      }
+    });
+
+    // Handle before page unload (as backup)
     window.addEventListener('beforeunload', () => {
       if (this.hasUnsavedChanges) {
-        // Save unsaved changes before leaving the page
-        this.forceSave();
+        // Try to save, but don't rely on this due to async nature
+        this.synchronousSave();
+        // Set a return value to trigger browser confirmation if save might fail
+        return 'Unsaved changes may be lost. Are you sure you want to leave?';
       }
     });
 
@@ -302,6 +317,60 @@ Try clicking the button in the top-right corner!
   }
 
   /**
+   * Execute synchronous save for critical save points (page hide, unload)
+   * Uses synchronous Chrome API calls to ensure data is saved
+   */
+  private synchronousSave(): void {
+    try {
+      const currentContent = this.editorRepository.getContent();
+      
+      // If content hasn't changed, no need to save
+      if (currentContent === this.lastContent) {
+        logger.debug('EditorUseCase', 'No changes detected, skipping synchronous save');
+        return;
+      }
+
+      logger.saveInfo('EditorUseCase', 'Executing synchronous save for page unload');
+      
+      // Create memo data
+      const memo = {
+        id: crypto.randomUUID(),
+        content: currentContent,
+        timestamp: Date.now(),
+        lastSaved: new Date().toISOString(),
+      };
+
+      // Save to multiple storage locations synchronously
+      try {
+        // Try sync storage first (if content is small enough)
+        const dataSize = new Blob([JSON.stringify(memo)]).size;
+        if (dataSize <= 8192) { // 8KB limit for sync storage
+          chrome.storage.sync.set({ newTabText: memo });
+          logger.debug('EditorUseCase', 'Synchronous save to sync storage completed');
+        }
+      } catch (error) {
+        logger.warn('EditorUseCase', 'Sync storage failed during synchronous save:', error);
+      }
+
+      try {
+        // Always save to local storage as backup
+        chrome.storage.local.set({ newTabText: memo });
+        chrome.storage.local.set({ newTabText_backup: memo });
+        logger.debug('EditorUseCase', 'Synchronous save to local storage completed');
+      } catch (error) {
+        logger.error('EditorUseCase', 'Local storage failed during synchronous save:', error);
+      }
+
+      // Update internal state
+      this.lastContent = currentContent;
+      this.hasUnsavedChanges = false;
+      
+    } catch (error) {
+      logger.error('EditorUseCase', 'Synchronous save failed:', error);
+    }
+  }
+
+  /**
    * Execute save immediately (without debouncing)
    * Used when tab becomes inactive or when leaving page
    */
@@ -322,28 +391,65 @@ Try clicking the button in the top-right corner!
       return;
     }
 
-    // If save is in progress, wait for it to complete then save current content
-    if (this.saveInProgress) {
-      logger.info('EditorUseCase', 'Waiting for current save to complete');
-      
-      // Wait for current save to complete (with timeout)
-      const maxWaitTime = 5000; // 5 seconds
-      const startWait = Date.now();
-      
-      while (this.saveInProgress && (Date.now() - startWait) < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      if (this.saveInProgress) {
-        logger.warn('EditorUseCase', 'Timeout waiting for save to complete, proceeding anyway');
-      }
+    // Add to save queue to ensure content is saved
+    this.addToSaveQueue(currentContent);
+    
+    // Process queue immediately
+    await this.processSaveQueue();
+  }
+
+  /**
+   * Add content to save queue
+   */
+  private addToSaveQueue(content: string): void {
+    // Only keep the latest content in queue
+    this.saveQueue = [content];
+    logger.debug('EditorUseCase', `Added content to save queue (${content.length} chars)`);
+  }
+
+  /**
+   * Process save queue with priority handling
+   */
+  private async processSaveQueue(): Promise<void> {
+    if (this.queueProcessing || this.saveQueue.length === 0) {
+      return;
     }
 
-    // Execute immediate save
+    this.queueProcessing = true;
+    logger.debug('EditorUseCase', `Processing save queue (${this.saveQueue.length} items)`);
+
     try {
-      await this.executeSaveWithRetry(currentContent);
-    } catch (error) {
-      logger.error('EditorUseCase', 'Force save failed:', error);
+      while (this.saveQueue.length > 0) {
+        const contentToSave = this.saveQueue.shift()!;
+        
+        // If there's a save in progress, wait with shorter timeout for force saves
+        if (this.saveInProgress) {
+          logger.info('EditorUseCase', 'Waiting for current save to complete');
+          
+          const maxWaitTime = 2000; // 2 seconds for queue processing
+          const startWait = Date.now();
+          
+          while (this.saveInProgress && (Date.now() - startWait) < maxWaitTime) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          
+          if (this.saveInProgress) {
+            logger.warn('EditorUseCase', 'Timeout waiting for save, executing anyway');
+            // Continue with save attempt
+          }
+        }
+
+        try {
+          await this.executeSaveWithRetry(contentToSave);
+          logger.debug('EditorUseCase', 'Save queue item processed successfully');
+        } catch (error) {
+          logger.error('EditorUseCase', 'Save queue item failed:', error);
+          // Continue processing other items in queue
+        }
+      }
+    } finally {
+      this.queueProcessing = false;
+      logger.debug('EditorUseCase', 'Save queue processing completed');
     }
   }
 

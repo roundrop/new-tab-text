@@ -4,12 +4,12 @@ import './heading-reset.css';
 import './heading-reset-extreme.css';
 
 // Core
-import { EditorUseCase } from '../../core/usecases/editor-usecase';
 
 // Adapters
-import { ChromeStorageRepository } from '../../adapters/storage/chrome-storage-repository';
 import { CodeMirrorRepository } from '../../adapters/editor/codemirror-repository';
+import { ChromeStorageRepository } from '../../adapters/storage/chrome-storage-repository';
 import { LocalThemeRepository } from '../../adapters/theme/local-theme-repository';
+import { EditorUseCase } from '../../core/usecases/editor-usecase';
 
 // Infrastructure
 import { UIManager } from '../../infrastructure/ui/ui-manager';
@@ -73,7 +73,7 @@ class NewTabTextApp {
 
       // Expose to global scope for debugging
       (window as any).newTabTextDebug = {
-        version: '1.2.0'
+        version: '1.3.0'
       };
 
       // Log initial debug info

@@ -1,4 +1,13 @@
-import { EditorState, Extension, StateEffect } from '@codemirror/state';
+import { 
+  defaultKeymap, 
+  history, 
+  historyKeymap,
+  indentWithTab
+} from '@codemirror/commands';
+import { markdown } from '@codemirror/lang-markdown';
+import { syntaxHighlighting, HighlightStyle, syntaxTree } from '@codemirror/language';
+import { languages } from '@codemirror/language-data';
+import { EditorState, Extension, StateEffect , StateField , RangeSetBuilder } from '@codemirror/state';
 import { 
   EditorView, 
   keymap, 
@@ -8,18 +17,7 @@ import {
   Decoration,
   DecorationSet
 } from '@codemirror/view';
-import { 
-  defaultKeymap, 
-  history, 
-  historyKeymap,
-  indentWithTab
-} from '@codemirror/commands';
-import { syntaxHighlighting, HighlightStyle, syntaxTree } from '@codemirror/language';
-import { markdown } from '@codemirror/lang-markdown';
-import { languages } from '@codemirror/language-data';
 import { tags } from '@lezer/highlight';
-import { StateField } from '@codemirror/state';
-import { RangeSetBuilder } from '@codemirror/state';
 
 
 // Chromium IME bug fix

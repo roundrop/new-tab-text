@@ -1,6 +1,6 @@
 {
   "name": "new-tab-text",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A Chrome extension that transforms new tabs into a text editor",
   "type": "module",
   "scripts": {

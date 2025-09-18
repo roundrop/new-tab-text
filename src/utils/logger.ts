@@ -42,12 +42,23 @@ class Logger {
   }
 
   /**
-   * Log info messages (shown only in development)
+   * Log info messages (shown only in development, except for save-related critical info)
    */
   info(component: string, message: string, ...args: any[]): void {
     if (this.logLevel >= LogLevel.INFO) {
       console.log(`[NewTabText:${component}] ${message}`, ...args);
     }
+    // Show critical save-related info messages even in production
+    else if (this.isCriticalSaveMessage(component, message)) {
+      console.log(`[NewTabText:${component}] ${message}`, ...args);
+    }
+  }
+
+  /**
+   * Log save-related critical info (always shown regardless of environment)
+   */
+  saveInfo(component: string, message: string, ...args: any[]): void {
+    console.log(`[NewTabText:${component}] SAVE: ${message}`, ...args);
   }
 
   /**
@@ -57,6 +68,20 @@ class Logger {
     if (this.logLevel >= LogLevel.DEBUG) {
       console.log(`[NewTabText:${component}] ${message}`, ...args);
     }
+  }
+
+  /**
+   * Check if message is critical save-related info that should be shown in production
+   */
+  private isCriticalSaveMessage(component: string, message: string): boolean {
+    const criticalKeywords = [
+      'save failed', 'save verification failed', 'synchronous save',
+      'restoring data from backup', 'service worker may not be active',
+      'all save retries exhausted', 'force save triggered'
+    ];
+    
+    return (component === 'ChromeStorage' || component === 'EditorUseCase') &&
+           criticalKeywords.some(keyword => message.toLowerCase().includes(keyword));
   }
 
   /**
