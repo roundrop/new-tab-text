@@ -1,6 +1,7 @@
+import { EditorView } from "@codemirror/view";
+
 import { EditorRepository } from "../../core/ports/repositories";
 import { setupCodeMirror, setEditorTheme, addChangeListener, getEditorContent, setEditorContent } from "../../infrastructure/editor/codemirror-setup";
-import { EditorView } from "@codemirror/view";
 
 /**
  * Implementation of editor repository using CodeMirror 6
